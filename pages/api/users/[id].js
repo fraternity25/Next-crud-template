@@ -1,4 +1,8 @@
-import { DataService } from '../../../lib/dataService';
+import {
+  getUserById,
+  updateUser,
+  deleteUser,
+} from '../../../lib/dataService';
 
 export default async function handler(req, res) {
   const { method, query } = req;
@@ -7,12 +11,11 @@ export default async function handler(req, res) {
   switch (method) {
     case 'GET':
       try {
-        const user = await DataService.getUserById(id);
-        if (!user) {
-          return res.status(404).json({ error: 'User not found' });
-        }
+        const user = await getUserById(id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
         res.status(200).json(user);
       } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to fetch user' });
       }
       break;
@@ -20,29 +23,23 @@ export default async function handler(req, res) {
     case 'PUT':
       try {
         const { name, email } = req.body;
-        
-        if (!name || !email) {
+        if (!name || !email)
           return res.status(400).json({ error: 'Name and email are required' });
-        }
-        
-        const updatedUser = await DataService.updateUser(id, { name, email });
-        res.status(200).json(updatedUser);
+
+        const updated = await updateUser(id, { name, email });
+        res.status(200).json(updated);
       } catch (error) {
-        if (error.message === 'User not found') {
-          return res.status(404).json({ error: 'User not found' });
-        }
-        res.status(500).json({ error: 'Failed to update user' });
+        console.error(error);
+        res.status(500).json({ error: error.message });
       }
       break;
 
     case 'DELETE':
       try {
-        await DataService.deleteUser(id);
+        await deleteUser(id);
         res.status(204).end();
       } catch (error) {
-        if (error.message === 'User not found') {
-          return res.status(404).json({ error: 'User not found' });
-        }
+        console.error(error);
         res.status(500).json({ error: 'Failed to delete user' });
       }
       break;
